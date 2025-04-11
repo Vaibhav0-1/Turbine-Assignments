@@ -8,19 +8,28 @@ declare_id!("Dvqhoir5paDyLooZtRf4HDVRcNb37NtjLdD3TBwSxWCy");
 
 #[program]
 pub mod vault_anchor {
+
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        ctx.accounts.initialise(ctx.bumps.vault_state)
+        ctx.accounts.initialise(ctx.bumps.vault_state)?;
+
+        Ok(())
     }
-    pub fn Payment(ctx: Context<Payment>, amount: u64) -> Result<()> {
-        ctx.accounts.initialise(amount)
+    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+        ctx.accounts.deposit(amount)?;
+
+        Ok(())
     }
-    pub fn withdraw(ctx: Context<Payment>, amount: u64) -> Result<()> {
-        ctx.accounts.withdraw(amount)
+    pub fn withdraw(ctx: &Context<Withdraw>, amount: u64) -> Result<()> {
+        ctx.accounts.withdraw(amount)?;
+
+        Ok(())
     }
-    pub fn CloseAccount(ctx: Context<CloseAccount>) -> Result<()> {
-        ctx.accounts.close()
+    pub fn close_account(ctx: Context<CloseAccount>) -> Result<()> {
+        ctx.accounts.close()?;
+
+        Ok(())
     }
 }
 
@@ -57,7 +66,7 @@ impl<'info> Initialize<'info> {
 
 
 #[derive(Accounts)]
-pub struct Payment<'info>{
+pub struct Deposit<'info>{
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
@@ -74,8 +83,8 @@ pub struct Payment<'info>{
 
 }
 
-impl<'info> Payment<'info> {
-    pub fn initialise(&mut self, amount:u64) -> Result<()> {
+impl<'info> Deposit<'info> {
+    pub fn deposit(&mut self, amount:u64) -> Result<()> {
         let cpi_program = self.system_program.to_account_info();
         let cpi_accounts = Transfer {
             from: self.user.to_account_info(),
@@ -83,7 +92,9 @@ impl<'info> Payment<'info> {
         };
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
 
-        transfer(cpi_ctx, amount)
+        transfer(cpi_ctx, amount)?;
+
+        Ok(())
     }
 
     pub fn withdraw(&mut self, amount:u64) -> Result<()> {
@@ -102,7 +113,9 @@ impl<'info> Payment<'info> {
 
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
-        transfer(cpi_ctx, self.vault.lamports())
+        transfer(cpi_ctx, self.vault.lamports())?;
+
+        Ok(())
     }
 
 }
@@ -155,7 +168,9 @@ impl<'info> CloseAccount<'info> {
 
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
-        transfer(cpi_ctx, self.vault.lamports())
+        transfer(cpi_ctx, self.vault.lamports())?;
+
+        Ok(())
     }
 }
 
